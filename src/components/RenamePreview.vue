@@ -17,7 +17,7 @@
         {{ item.message }}
       </span>
     </div>
-    <div class="rename-preview-content">
+    <div ref="scrollRef" class="rename-preview-content" @scroll="onScroll">
       <table class="rename-preview-content-table">
         <thead class="rename-preview-content-table-header">
           <tr
@@ -70,9 +70,12 @@
             </th>
           </tr>
         </thead>
-        <tbody class="rename-preview-content-table-body">
+        <tbody ref="bodyRef" class="rename-preview-content-table-body">
+          <tr v-if="topPad > 0" class="rename-preview-content-table-spacer">
+            <td colspan="6" :style="{ height: topPad + 'px', padding: 0 }"></td>
+          </tr>
           <tr
-            v-for="item in currentList"
+            v-for="item in visibleList"
             :key="item.id"
             class="rename-preview-content-table-item"
             :class="{
@@ -96,6 +99,7 @@
             </td>
             <td class="rename-preview-content-table-item-index">
               <component-icon
+                v-if="!isVirtualized"
                 name="rank"
                 class="rename-preview-content-table-item-index-handler"
               ></component-icon>
@@ -127,6 +131,9 @@
               <component-icon :name="getStatusIcon(item.status)"></component-icon>
             </td>
           </tr>
+          <tr v-if="bottomPad > 0" class="rename-preview-content-table-spacer">
+            <td colspan="6" :style="{ height: bottomPad + 'px', padding: 0 }"></td>
+          </tr>
         </tbody>
       </table>
     </div>
@@ -140,12 +147,13 @@ import type { Ref } from "vue";
 import type { Change } from "diff";
 import type { Provider, IListItem, TListItemStatus } from "@/provider/interface";
 
-import { h, ref, inject, onMounted, onUnmounted, defineComponent } from "vue";
+import { h, ref, computed, inject, nextTick, onMounted, onUnmounted, defineComponent } from "vue";
 import {
   LIST_ITEM_STATUS_READY,
   LIST_ITEM_STATUS_PENDING,
   LIST_ITEM_STATUS_SUCCESS,
   LIST_ITEM_STATUS_FAIL,
+  VIRTUAL_LIST_THRESHOLD,
 } from "@/provider/interface";
 import ComponentIcon from "@/components/Component/ComponentIcon.vue";
 import ComponentLoading from "@/components/Component/ComponentLoading.vue";
@@ -163,8 +171,92 @@ export default defineComponent({
 
     const currentList = ref<IListItem[]>(providerRef?.value.currentList || []);
 
+    // ------- 虚拟滚动 -------
+    // 仅渲染可视区域 + 上下少量缓冲行，使“打开/批量操作”的开销不随文件数增长。
+    // 行数 ≤ 阈值时退化为全量渲染（与旧版一致，保留拖拽排序）。
+    const OVERSCAN = 6;
+    const DEFAULT_ROW_HEIGHT = 30;
+
+    const scrollRef = ref<HTMLElement | null>(null);
+    const bodyRef = ref<HTMLElement | null>(null);
+    const scrollTop = ref(0);
+    const viewportHeight = ref(0);
+    const rowHeight = ref(DEFAULT_ROW_HEIGHT);
+
+    const isVirtualized = computed(() => currentList.value.length > VIRTUAL_LIST_THRESHOLD);
+
+    const startIndex = computed(() => {
+      if (!isVirtualized.value) {
+        return 0;
+      }
+      return Math.max(0, Math.floor(scrollTop.value / rowHeight.value) - OVERSCAN);
+    });
+    const endIndex = computed(() => {
+      const total = currentList.value.length;
+      if (!isVirtualized.value) {
+        return total;
+      }
+      const visibleCount = Math.ceil(viewportHeight.value / rowHeight.value) + OVERSCAN * 2;
+      return Math.min(total, startIndex.value + visibleCount);
+    });
+
+    const visibleList = computed(() => {
+      if (!isVirtualized.value) {
+        return currentList.value;
+      }
+      return currentList.value.slice(startIndex.value, endIndex.value);
+    });
+
+    const topPad = computed(() =>
+      isVirtualized.value ? startIndex.value * rowHeight.value : 0
+    );
+    const bottomPad = computed(() =>
+      isVirtualized.value
+        ? (currentList.value.length - endIndex.value) * rowHeight.value
+        : 0
+    );
+
+    // 用首个真实数据行的高度校正 rowHeight（受字号/缩放影响，不能写死）。
+    const measureRowHeight = () => {
+      const body = bodyRef.value;
+      if (!body) {
+        return;
+      }
+      const row = body.querySelector<HTMLElement>(".rename-preview-content-table-item");
+      if (row && row.offsetHeight > 0) {
+        rowHeight.value = row.offsetHeight;
+      }
+    };
+    const syncViewport = () => {
+      const el = scrollRef.value;
+      if (el) {
+        viewportHeight.value = el.clientHeight;
+        scrollTop.value = el.scrollTop;
+      }
+    };
+
+    let rafId = 0;
+    const onScroll = () => {
+      if (rafId) {
+        return;
+      }
+      rafId = requestAnimationFrame(() => {
+        rafId = 0;
+        const el = scrollRef.value;
+        if (el) {
+          scrollTop.value = el.scrollTop;
+          viewportHeight.value = el.clientHeight;
+        }
+      });
+    };
+
     const onCurrentListUpdate = (val: IListItem[]) => {
       currentList.value = val;
+      // 列表变更后（如打开面板、切换网盘目录）重新测量并同步视口尺寸。
+      nextTick(() => {
+        syncViewport();
+        measureRowHeight();
+      });
     };
 
     const onResetSort = () => {
@@ -211,15 +303,30 @@ export default defineComponent({
 
     onMounted(() => {
       providerRef?.value.onCurrentListUpdate(onCurrentListUpdate);
+      nextTick(() => {
+        syncViewport();
+        measureRowHeight();
+      });
     });
 
     onUnmounted(() => {
       providerRef?.value.offCurrentListUpdate(onCurrentListUpdate);
+      if (rafId) {
+        cancelAnimationFrame(rafId);
+        rafId = 0;
+      }
     });
 
     return {
       providerRef,
       currentList,
+      visibleList,
+      isVirtualized,
+      topPad,
+      bottomPad,
+      scrollRef,
+      bodyRef,
+      onScroll,
       onResetSort,
       onCheckedAllUpdate,
       onItemIsCheckedUpdate,
@@ -305,6 +412,11 @@ export default defineComponent({
   color: var(--cdp-color-gray-300);
   transition: color var(--cdp-transition-default);
   background-color: var(--cdp-color-white);
+}
+/* 虚拟滚动占位行：仅用于撑起滚动高度，不参与交互与样式 */
+.rename-preview-content-table-spacer td {
+  padding: 0;
+  border: none;
 }
 .rename-preview-content-table-item.is-checked {
   color: var(--cdp-color-gray-600);

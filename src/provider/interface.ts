@@ -10,6 +10,11 @@ import complementZero from "@/utils/complementZero";
 import extractEpisode from "@/utils/episodeParse";
 import compileBlocks, { type IPatternBlock } from "@/utils/patternBuilder";
 
+// 文件数量超过该阈值时，预览列表启用虚拟滚动（仅渲染可视区域行），
+// 同时关闭原生拖拽排序（虚拟滚动下 DOM 中不存在全部行，拖拽会错乱）。
+// 小列表保持原有行为（含拖拽），不引入回归。
+export const VIRTUAL_LIST_THRESHOLD = 50;
+
 export abstract class Provider {
   // 匹配测试
   static test() {
@@ -520,9 +525,20 @@ export abstract class Provider {
     this._uncheckedList.clear();
   }
 
+  // 当前列表是否启用虚拟滚动（行数过多）。
+  // 预览组件据此决定是否只渲染可视区域，并隐藏拖拽手柄。
+  public get isVirtualized(): boolean {
+    return this._currentList.length > VIRTUAL_LIST_THRESHOLD;
+  }
+
   // 初始化拖动排序
   private _sortableInstance: Sortable | null = null;
   private _initDragSort() {
+    // 虚拟滚动模式下 DOM 不包含全部行，原生拖拽会破坏顺序，直接跳过。
+    // 用户仍可通过“重置排序 / 勾选顺序”调整。
+    if (this.isVirtualized) {
+      return;
+    }
     querySelector(".rename-preview-content-table-body", 10).then((res) => {
       this._sortableInstance = Sortable.create(res, {
         handle: ".rename-preview-content-table-item-index-handler",

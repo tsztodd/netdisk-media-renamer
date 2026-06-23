@@ -1,0 +1,30 @@
+{
+  "include": [
+    "src/**/*",
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "src/**/*.vue",
+    "src/**/*.d.ts",
+    "vite.config.ts"
+  ],
+  "extends": "@vue/tsconfig/tsconfig.dom.json",
+  "compilerOptions": {
+    "jsx": "preserve",
+    "lib": ["DOM", "ESNext"],
+    "types": ["chrome"],
+    "paths": { "@/*": ["./src/*"] },
+    "noEmit": true,
+    "strict": true,
+    "module": "ESNext",
+    "target": "ESNext",
+    "baseUrl": ".",
+    "composite": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "moduleResolution": "Node",
+    "resolveJsonModule": true,
+    "useDefineForClassFields": true,
+    "allowSyntheticDefaultImports": true
+  }
+}

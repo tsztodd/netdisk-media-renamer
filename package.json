@@ -1,0 +1,73 @@
+{
+  "name": "netdisk-media-renamer",
+  "type": "module",
+  "cnName": "网盘影视刮削重命名",
+  "author": "Alek.LIU",
+  "contributors": [
+    "afeireal（原作者，基于其 cloud-disk-plugin 重构 https://github.com/afeireal/cloud-disk-plugin）"
+  ],
+  "license": "MIT",
+  "version": "2.0.0",
+  "keywords": [
+    "网盘",
+    "影视",
+    "刮削",
+    "重命名",
+    "批量重命名",
+    "Plex",
+    "Emby",
+    "Jellyfin",
+    "TMDB",
+    "cloud disk",
+    "media rename",
+    "tamper monkey"
+  ],
+  "repository": "https://github.com/Lens-lzy/netdisk-media-renamer",
+  "description": "Batch rename media files on cloud disks for scraper-friendly naming.",
+  "cnDescription": "网盘影视文件批量重命名，生成刮削友好的命名（支持 TMDB 搜索、正则积木），适配百度网盘、阿里云盘、夸克网盘、PikPak。",
+  "scripts": {
+    "dev:tamper-monkey": "vite --mode tamper-monkey",
+    "dev:web-extension": "vite --mode web-extension-dev",
+    "build:tamper-monkey": "vue-tsc --noEmit && vite build --mode tamper-monkey",
+    "build:web-extension": "vue-tsc --noEmit && vite build --mode web-extension-build && node buildWebExtension.js",
+    "preview": "vite preview",
+    "test": "vitest",
+    "type-check": "vue-tsc --noEmit -p tsconfig.json --composite false",
+    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",
+    "format": "prettier --write src/"
+  },
+  "dependencies": {
+    "diff": "^7.0.0",
+    "sortablejs": "^1.15.3",
+    "vue": "^3.4.38",
+    "webextension-polyfill": "^0.12.0"
+  },
+  "devDependencies": {
+    "@rushstack/eslint-patch": "^1.10.4",
+    "@types/chrome": "^0.0.270",
+    "@types/diff": "^6.0.0",
+    "@types/node": "^20.16.2",
+    "@types/sortablejs": "^1.15.8",
+    "@types/webextension-polyfill": "^0.12.1",
+    "@vitejs/plugin-vue": "^5.1.2",
+    "@vue/eslint-config-prettier": "^9.0.0",
+    "@vue/eslint-config-typescript": "^13.0.0",
+    "@vue/test-utils": "^2.4.6",
+    "@vue/tsconfig": "^0.5.1",
+    "dotenv": "^16.4.5",
+    "eslint": "^8.57.0",
+    "eslint-plugin-vue": "^9.27.0",
+    "happy-dom": "^15.3.1",
+    "prettier": "^3.3.3",
+    "puppeteer": "^23.2.0",
+    "typescript": "^5.5.4",
+    "vite": "^5.4.2",
+    "vite-plugin-css-injected-by-js": "^3.5.1",
+    "vite-plugin-monkey": "^4.0.6",
+    "vite-plugin-web-extension": "^4.1.6",
+    "vitest": "^2.0.5",
+    "vue-tsc": "^2.1.0",
+    "xmlbuilder2": "^3.1.1",
+    "zip-a-folder": "^3.1.7"
+  }
+}

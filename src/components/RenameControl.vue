@@ -129,7 +129,7 @@
 import type { Ref } from "vue";
 import type { Provider } from "@/provider/interface";
 
-import { ref, inject, computed, onMounted, onUnmounted, defineComponent } from "vue";
+import { ref, inject, watch, computed, onMounted, onUnmounted, defineComponent } from "vue";
 import useVersion from "@/utils/useVersion";
 import TmdbSearch from "@/components/TmdbSearch.vue";
 import PatternBuilder from "@/components/PatternBuilder.vue";
@@ -154,6 +154,23 @@ export default defineComponent({
     const version = useVersion();
 
     const providerRef = inject<Ref<Provider>>("providerRef");
+
+    // 「自动集数」只在剧集模式默认开启；切到积木/正则模式时自动关闭，
+    // 避免在纯清理（查找替换/删字等）场景下意外给文件名追加 E01/E02。
+    // 用户在任一模式内仍可手动勾选/取消。
+    watch(
+      () => providerRef?.value.replaceParams.renameMode,
+      (mode) => {
+        const p = providerRef?.value;
+        if (!p) {
+          return;
+        }
+        const want = mode === "series";
+        if (p.replaceParams.autoEpisode !== want) {
+          p.replaceParams.autoEpisode = want;
+        }
+      }
+    );
 
     // Provider 是普通类实例，其 shouldContinue 等状态非响应式。
     // 控制栏在某些模式（如积木模式）下不会因 blocks 变化而重渲染，

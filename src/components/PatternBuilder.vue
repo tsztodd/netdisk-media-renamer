@@ -101,6 +101,40 @@
             </select>
           </template>
 
+          <template v-else-if="block.type === 'removeTag'">
+            <span class="pb-label">删除</span>
+            <select
+              class="pb-input"
+              :value="block.tag"
+              :disabled="disabled"
+              @change="onPatch(index, { tag: ($event.target as HTMLSelectElement).value as any })"
+            >
+              <option v-for="(label, value) in removeTagLabels" :key="value" :value="value">
+                {{ label }}
+              </option>
+            </select>
+          </template>
+
+          <template v-else-if="block.type === 'moveText'">
+            <input
+              class="pb-input"
+              :value="block.text"
+              :disabled="disabled"
+              placeholder="要移动的文字，如 2024"
+              @input="onPatch(index, { text: ($event.target as HTMLInputElement).value })"
+            />
+            <select
+              class="pb-input"
+              :value="block.moveTo"
+              :disabled="disabled"
+              @change="onPatch(index, { moveTo: ($event.target as HTMLSelectElement).value as any })"
+            >
+              <option v-for="(label, value) in moveToLabels" :key="value" :value="value">
+                {{ label }}
+              </option>
+            </select>
+          </template>
+
           <template v-else-if="block.type === 'padNumber'">
             <span class="pb-label">补到</span>
             <input
@@ -166,6 +200,8 @@ import {
   createBlock,
   PATTERN_BLOCK_LABELS,
   BRACKET_LABELS,
+  MOVE_TO_LABELS,
+  REMOVE_TAG_LABELS,
 } from "@/utils/patternBuilder";
 
 export default defineComponent({
@@ -183,6 +219,8 @@ export default defineComponent({
 
     const labels = PATTERN_BLOCK_LABELS;
     const bracketLabels = BRACKET_LABELS;
+    const moveToLabels = MOVE_TO_LABELS;
+    const removeTagLabels = REMOVE_TAG_LABELS;
     const blockTypeOptions = (
       Object.keys(PATTERN_BLOCK_LABELS) as TPatternBlockType[]
     ).map((value) => ({ value, label: PATTERN_BLOCK_LABELS[value] }));
@@ -220,6 +258,8 @@ export default defineComponent({
       blocks,
       labels,
       bracketLabels,
+      moveToLabels,
+      removeTagLabels,
       blockTypeOptions,
       addType,
       onAdd,

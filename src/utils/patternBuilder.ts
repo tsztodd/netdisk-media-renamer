@@ -13,6 +13,8 @@ export type TPatternBlockType =
   | "removeText" // 删除文字
   | "replaceText" // 查找替换
   | "removeBrackets" // 删除括号及其内容
+  | "removeTag" // 删除标记（画质/编码/来源/音轨/年份/结尾集数等预设）
+  | "moveText" // 移动文字（把某段文字挪到 最前/剧名后/最后）
   | "padNumber" // 数字补零（第1集 → 第01集）
   | "prefix" // 加前缀
   | "suffix" // 加后缀
@@ -20,15 +22,29 @@ export type TPatternBlockType =
 
 export type TBracketKind = "square" | "round" | "curly" | "cn" | "all";
 
+// 「移动文字」的目标位置
+export type TMoveTo = "start" | "afterTitle" | "end";
+
+// 「删除标记」的预设种类——面向影视文件名里常见的发布标记
+export type TRemoveTag =
+  | "resolution" // 画质：1080p / 2160p ...
+  | "codec" // 编码：H265 / x264 ...
+  | "source" // 来源：WEB-DL / BluRay ...
+  | "audio" // 音轨：DDP2.0 / DTS ...
+  | "year" // 年份：2024
+  | "episodeTail"; // 结尾集数：末尾多出来的 .E01
+
 export interface IPatternBlock {
   id: string;
   type: TPatternBlockType;
   enabled: boolean;
   // 各类型用到的参数（按需取用，保持松散）
-  text?: string; // removeText / prefix / suffix
+  text?: string; // removeText / prefix / suffix / moveText
   from?: string; // replaceText
   to?: string; // replaceText
   brackets?: TBracketKind; // removeBrackets
+  tag?: TRemoveTag; // removeTag
+  moveTo?: TMoveTo; // moveText
   length?: number; // padNumber
   pattern?: string; // regex
   flags?: string; // regex
@@ -39,6 +55,8 @@ export const PATTERN_BLOCK_LABELS: Record<TPatternBlockType, string> = {
   removeText: "删除文字",
   replaceText: "查找替换",
   removeBrackets: "删除括号内容",
+  removeTag: "删除标记",
+  moveText: "移动文字",
   padNumber: "数字补零",
   prefix: "加前缀",
   suffix: "加后缀",
@@ -51,6 +69,45 @@ export const BRACKET_LABELS: Record<TBracketKind, string> = {
   curly: "{ 花括号 }",
   cn: "【 中文括号 】",
   all: "全部括号",
+};
+
+export const MOVE_TO_LABELS: Record<TMoveTo, string> = {
+  start: "移到最前",
+  afterTitle: "移到剧名后",
+  end: "移到最后",
+};
+
+export const REMOVE_TAG_LABELS: Record<TRemoveTag, string> = {
+  resolution: "画质 (1080p/2160p)",
+  codec: "编码 (H265/x264)",
+  source: "来源 (WEB-DL/BluRay)",
+  audio: "音轨 (DDP2.0/DTS)",
+  year: "年份 (2024)",
+  episodeTail: "结尾集数 (.E01)",
+};
+
+// 每个预设对应的匹配规则。前置 [.\s_]? 把紧邻的一个分隔符一起带走，避免删完留下「..」。
+const REMOVE_TAG_REGEXPS: Record<TRemoveTag, RegExp[]> = {
+  resolution: [/[.\s_]?\b(480p|576p|720p|1080p|1440p|2160p|4k|8k|uhd)\b/gi],
+  codec: [/[.\s_]?\b(x264|x265|h\.?264|h\.?265|hevc|avc|av1)\b/gi],
+  source: [/[.\s_]?\b(web-?dl|web-?rip|blu-?ray|bd-?rip|hd-?tv|dvd-?rip|hd-?rip|remux)\b/gi],
+  audio: [/[.\s_]?\b(ddp?5\.1|ddp?2\.0|ddp|dd\+?|e?ac-?3|aac|dts(?:-hd)?|truehd|atmos|flac|2\.0|5\.1|7\.1)\b/gi],
+  year: [/[.\s_]?\b(?:19|20)\d{2}\b/g],
+  episodeTail: [/[.\s_]E\d{1,3}$/gi],
+};
+
+// 猜测文件名使用的分隔符：取出现次数最多的那个，默认用「.」
+const detectSeparator = (input: string): string => {
+  let best = ".";
+  let bestCount = 0;
+  for (const sep of [".", "_", " "]) {
+    const count = input.split(sep).length - 1;
+    if (count > bestCount) {
+      bestCount = count;
+      best = sep;
+    }
+  }
+  return best;
 };
 
 const BRACKET_REGEXPS: Record<TBracketKind, RegExp[]> = {
@@ -87,6 +144,50 @@ export const applyBlock = (input: string, block: IPatternBlock): string => {
         });
         // 删除括号后常残留多余空格，收敛并去除首尾空白，避免出现 “..” 这类结果
         return out.replace(/\s{2,}/g, " ").trim();
+      }
+      case "removeTag": {
+        const tag = block.tag || "resolution";
+        let out = input;
+        (REMOVE_TAG_REGEXPS[tag] || []).forEach((re) => {
+          out = out.replace(re, "");
+        });
+        // 删完可能留下连续分隔符或首尾残留，收敛一下
+        return out
+          .replace(/\.{2,}/g, ".")
+          .replace(/_{2,}/g, "_")
+          .replace(/\s{2,}/g, " ")
+          .replace(/^[.\s_-]+|[.\s_-]+$/g, "")
+          .trim();
+      }
+      case "moveText": {
+        const text = (block.text || "").trim();
+        if (!text || !input.includes(text)) {
+          return input;
+        }
+        const sep = detectSeparator(input);
+        // 先把要移动的文字抠出来：优先按「整段」匹配（如分隔符之间的 2024），
+        // 整段取不到再退化为去掉第一处出现的子串。
+        const tokens = input.split(sep);
+        const tokenIndex = tokens.indexOf(text);
+        let rest: string;
+        if (tokenIndex !== -1) {
+          tokens.splice(tokenIndex, 1);
+          rest = tokens.join(sep);
+        } else {
+          rest = input.replace(text, "");
+        }
+        // split + 过滤空串，顺便把抠完残留的连续分隔符吃掉
+        const parts = rest.split(sep).filter((t) => t !== "");
+        const moveTo = block.moveTo || "afterTitle";
+        if (moveTo === "start") {
+          parts.unshift(text);
+        } else if (moveTo === "end") {
+          parts.push(text);
+        } else {
+          // 剧名后 = 第一段（剧名）之后
+          parts.splice(Math.min(1, parts.length), 0, text);
+        }
+        return parts.join(sep);
       }
       case "padNumber": {
         const length = Math.max(1, Math.min(10, block.length || 2));
@@ -126,6 +227,10 @@ export const createBlock = (type: TPatternBlockType): IPatternBlock => {
   switch (type) {
     case "removeBrackets":
       return { ...base, brackets: "all" };
+    case "removeTag":
+      return { ...base, tag: "resolution" };
+    case "moveText":
+      return { ...base, text: "", moveTo: "afterTitle" };
     case "padNumber":
       return { ...base, length: 2 };
     case "regex":

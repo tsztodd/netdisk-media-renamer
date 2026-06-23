@@ -169,13 +169,19 @@ export default defineComponent({
       providerRef?.value.offCurrentListUpdate(onCurrentListUpdate);
     });
 
-    const isDisabled = computed(
-      () => providerRef?.value.replaceParamsDisabled || providerRef?.value.isLoading
-    );
-    const canApply = computed(() => {
-      // 读取 refresh 以在每次列表重算后重新求值
+    // 注意：isLoading / replaceParamsDisabled / shouldContinue 都是 Provider 上的
+    // 普通（非响应式）属性。computed 若不读取任何响应式依赖，会永久缓存首次结果——
+    // 一旦首次求值发生在「列表加载中(isLoading=true)」，就会被冻结成 true，
+    // 导致「应用」按钮永远禁用。这里统一读取 refresh（每次列表重算自增）作为依赖，
+    // 强制这些状态随列表更新重新求值。
+    const isDisabled = computed(() => {
       void refresh.value;
-      return !!providerRef?.value.shouldContinue && !isDisabled.value;
+      return !!(providerRef?.value.replaceParamsDisabled || providerRef?.value.isLoading);
+    });
+    const canApply = computed(() => {
+      void refresh.value;
+      const p = providerRef?.value;
+      return !!(p && p.shouldContinue && !p.replaceParamsDisabled && !p.isLoading);
     });
     const onResetClick = () => {
       providerRef?.value.reset();

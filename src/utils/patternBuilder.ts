@@ -46,6 +46,7 @@ export interface IPatternBlock {
   tag?: TRemoveTag; // removeTag
   moveTo?: TMoveTo; // moveText
   length?: number; // padNumber
+  offset?: number; // padNumber：数字偏移（补零后对每个数字加此值，可为负数）
   pattern?: string; // regex
   flags?: string; // regex
   replace?: string; // regex
@@ -191,7 +192,16 @@ export const applyBlock = (input: string, block: IPatternBlock): string => {
       }
       case "padNumber": {
         const length = Math.max(1, Math.min(10, block.length || 2));
-        return input.replace(/\d+/g, (digits) => digits.padStart(length, "0"));
+        const offset = isFinite(block.offset as number) ? (block.offset as number) : 0;
+        return input.replace(/\d+/g, (digits) => {
+          const num = parseInt(digits, 10);
+          const shifted = num + offset;
+          if (shifted < 0) {
+            // 负数直接保留原数字（偏移不应产生负数集数）
+            return digits.padStart(length, "0");
+          }
+          return String(shifted).padStart(length, "0");
+        });
       }
       case "prefix":
         return (block.text || "") + input;
@@ -232,7 +242,7 @@ export const createBlock = (type: TPatternBlockType): IPatternBlock => {
     case "moveText":
       return { ...base, text: "", moveTo: "afterTitle" };
     case "padNumber":
-      return { ...base, length: 2 };
+      return { ...base, length: 2, offset: 0 };
     case "regex":
       return { ...base, pattern: "", flags: "g", replace: "" };
     default:

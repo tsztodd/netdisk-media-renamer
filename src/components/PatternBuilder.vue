@@ -146,7 +146,16 @@
               :disabled="disabled"
               @input="onPatch(index, { length: Number(($event.target as HTMLInputElement).value) || 2 })"
             />
-            <span class="pb-label">位（第1集 → 第01集）</span>
+            <span class="pb-label">位</span>
+            <span class="pb-label">偏移</span>
+            <input
+              class="pb-input pb-input-num"
+              :value="block.offset ?? 0"
+              :disabled="disabled"
+              placeholder="0"
+              @input="onPatch(index, { offset: parseOffset(($event.target as HTMLInputElement).value) })"
+            />
+            <span class="pb-label">（第1集 → 第01集）</span>
           </template>
 
           <template v-else-if="block.type === 'prefix' || block.type === 'suffix'">
@@ -228,6 +237,13 @@ export default defineComponent({
     // 下拉选择的「待添加」积木类型
     const addType = ref<TPatternBlockType>("removeBrackets");
 
+    // 偏移输入解析：容忍中间输入态（如 "-"、"2-3"），非数字直接忽略
+    const parseOffset = (raw: string): number => {
+      // parseInt 对 "-" 返回 NaN，对 "-3" 返回 -3
+      const n = parseInt(raw, 10);
+      return isFinite(n) ? n : 0;
+    };
+
     // 所有修改都通过整体替换数组来触发 ReplaceParams.blocks 的 setter（含防抖重算）
     const commit = (next: IPatternBlock[]) => {
       if (providerRef?.value) {
@@ -262,6 +278,7 @@ export default defineComponent({
       removeTagLabels,
       blockTypeOptions,
       addType,
+      parseOffset,
       onAdd,
       onRemove,
       onPatch,

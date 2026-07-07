@@ -496,6 +496,8 @@ export abstract class Provider {
 
   // 未选中的文件列表
   private _uncheckedList: Set<string> = new Set();
+  // 上次点击的文件在 currentList 中的索引，用于 Shift+区间选择
+  private _lastClickedIndex: number = -1;
   // 更新是否选中文件列表
   public updateItemIsChecked(item: IListItem, val: boolean): void {
     item.isChecked = val;
@@ -503,6 +505,48 @@ export abstract class Provider {
       this._uncheckedList.delete(item.id);
     } else {
       this._uncheckedList.add(item.id);
+    }
+    this._updateItemSortByIsChecked();
+    // 记录当前点击位置供 Shift+区间选择使用
+    this._lastClickedIndex = this._currentList.findIndex((i) => i.id === item.id);
+    this._updateCurrentList();
+  }
+  // Shift+区间选择：选中 _lastClickedIndex 到 currentIndex 之间的所有可操作文件
+  public selectRange(currentIndex: number): void {
+    if (this._lastClickedIndex < 0 || this._lastClickedIndex >= this._currentList.length) {
+      this._lastClickedIndex = currentIndex;
+      return;
+    }
+    const min = Math.min(this._lastClickedIndex, currentIndex);
+    const max = Math.max(this._lastClickedIndex, currentIndex);
+    for (let i = min; i <= max; i++) {
+      const item = this._currentList[i];
+      // 跳过不可操作的文件（已提交或正在处理的）
+      if (item.status !== LIST_ITEM_STATUS_NONE) {
+        continue;
+      }
+      item.isChecked = true;
+      this._uncheckedList.delete(item.id);
+    }
+    this._lastClickedIndex = currentIndex;
+    this._updateItemSortByIsChecked();
+    this._updateCurrentList();
+  }
+  // 批量更新选中状态：一次批量更新，只触发一次 _updateCurrentList
+  public batchUpdateItemIsChecked(items: { item: IListItem; val: boolean }[]): void {
+    if (!items.length) {
+      return;
+    }
+    for (const { item, val } of items) {
+      if (item.status !== LIST_ITEM_STATUS_NONE) {
+        continue;
+      }
+      item.isChecked = val;
+      if (val) {
+        this._uncheckedList.delete(item.id);
+      } else {
+        this._uncheckedList.add(item.id);
+      }
     }
     this._updateItemSortByIsChecked();
     this._updateCurrentList();
@@ -522,6 +566,7 @@ export abstract class Provider {
     this._updateCurrentList();
   }
   private _clearUncheckedList() {
+    this._lastClickedIndex = -1;
     this._uncheckedList.clear();
   }
 

@@ -17,7 +17,12 @@
         {{ item.message }}
       </span>
     </div>
-    <div ref="scrollRef" class="rename-preview-content" @scroll="onScroll">
+    <div ref="scrollRef" class="rename-preview-content" @scroll="onScroll" @mousedown="onMouseDown">
+      <div
+        v-if="boxSelect.active"
+        class="rename-preview-box-select"
+        :style="boxSelectRectStyle"
+      ></div>
       <table class="rename-preview-content-table">
         <thead class="rename-preview-content-table-header">
           <tr
@@ -78,6 +83,7 @@
             v-for="item in visibleList"
             :key="item.id"
             class="rename-preview-content-table-item"
+            :data-item-id="item.id"
             :class="{
               'is-error': item.isError,
               'is-change': item.isChange,
@@ -90,7 +96,10 @@
                 (providerRef.replaceParams.sortChecked && !item.isChecked),
             }"
           >
-            <td class="rename-preview-content-table-item-checkbox">
+            <td
+              class="rename-preview-content-table-item-checkbox"
+              @click="onItemCheckboxClick(item, $event)"
+            >
               <component-checkbox
                 :model-value="item.isChecked"
                 :readonly="item.status !== 'none'"
@@ -147,7 +156,7 @@ import type { Ref } from "vue";
 import type { Change } from "diff";
 import type { Provider, IListItem, TListItemStatus } from "@/provider/interface";
 
-import { h, ref, computed, inject, nextTick, onMounted, onUnmounted, defineComponent } from "vue";
+import { h, ref, reactive, computed, inject, nextTick, onMounted, onUnmounted, defineComponent } from "vue";
 import {
   LIST_ITEM_STATUS_READY,
   LIST_ITEM_STATUS_PENDING,
@@ -182,6 +191,207 @@ export default defineComponent({
     const scrollTop = ref(0);
     const viewportHeight = ref(0);
     const rowHeight = ref(DEFAULT_ROW_HEIGHT);
+
+    // ------- 鼠标拖拽框选 -------
+    const boxSelect = reactive({
+      active: false,
+      startX: 0,
+      startY: 0,
+      currentX: 0,
+      currentY: 0,
+      toggle: false,
+    });
+
+    const boxSelectRectStyle = computed(() => {
+      if (!boxSelect.active) {
+        return {};
+      }
+      const left = Math.min(boxSelect.startX, boxSelect.currentX);
+      const top = Math.min(boxSelect.startY, boxSelect.currentY);
+      const width = Math.abs(boxSelect.currentX - boxSelect.startX);
+      const height = Math.abs(boxSelect.currentY - boxSelect.startY);
+      return {
+        left: left + "px",
+        top: top + "px",
+        width: width + "px",
+        height: height + "px",
+      };
+    });
+
+    // 框选自动滚动
+    let autoScrollTimer: ReturnType<typeof setInterval> | null = null;
+    const AUTO_SCROLL_SPEED = 6;
+    const AUTO_SCROLL_ZONE = 30; // 边缘触发区高度
+
+    const stopAutoScroll = () => {
+      if (autoScrollTimer !== null) {
+        clearInterval(autoScrollTimer);
+        autoScrollTimer = null;
+      }
+    };
+
+    const startAutoScroll = (el: HTMLElement, clientY: number) => {
+      stopAutoScroll();
+      autoScrollTimer = setInterval(() => {
+        const rect = el.getBoundingClientRect();
+        const relY = clientY - rect.top;
+        if (relY < AUTO_SCROLL_ZONE && el.scrollTop > 0) {
+          el.scrollTop = Math.max(0, el.scrollTop - AUTO_SCROLL_SPEED);
+        } else if (relY > rect.height - AUTO_SCROLL_ZONE && el.scrollTop < el.scrollHeight - el.clientHeight) {
+          el.scrollTop = Math.min(el.scrollHeight - el.clientHeight, el.scrollTop + AUTO_SCROLL_SPEED);
+        } else {
+          stopAutoScroll();
+        }
+      }, 16); // ~60fps
+    };
+
+    // 获取文件行在列表中的理论 Y 范围（兼容虚拟滚动）
+    // HEADER_HEIGHT 是 thead 的大致高度（含 padding）
+    const HEADER_HEIGHT = 35;
+    const getRowYRange = (listIndex: number): { top: number; bottom: number } | null => {
+      const top = listIndex * rowHeight.value + HEADER_HEIGHT;
+      const bottom = top + rowHeight.value;
+      return { top, bottom };
+    };
+
+    // 判断一个矩形是否与选框相交
+    const rectsIntersect = (
+      selLeft: number, selTop: number, selRight: number, selBottom: number,
+      rowLeft: number, rowTop: number, rowRight: number, rowBottom: number,
+    ): boolean => {
+      return !(selRight < rowLeft || selLeft > rowRight || selBottom < rowTop || selTop > rowBottom);
+    };
+
+    const onMouseDown = (event: MouseEvent) => {
+      // 只处理鼠标左键
+      if (event.button !== 0) {
+        return;
+      }
+      const target = event.target as HTMLElement;
+      // 不干扰 checkbox / button / input / drag handle 的点击
+      if (
+        target.closest(".rename-preview-content-table-item-checkbox") ||
+        target.closest("button") ||
+        target.closest("input") ||
+        target.closest("select") ||
+        target.closest(".rename-preview-content-table-item-index-handler")
+      ) {
+        return;
+      }
+      const scrollEl = scrollRef.value;
+      if (!scrollEl) {
+        return;
+      }
+      const scrollRect = scrollEl.getBoundingClientRect();
+      boxSelect.active = true;
+      boxSelect.startX = event.clientX - scrollRect.left + scrollEl.scrollLeft;
+      boxSelect.startY = event.clientY - scrollRect.top + scrollEl.scrollTop;
+      boxSelect.currentX = boxSelect.startX;
+      boxSelect.currentY = boxSelect.startY;
+      boxSelect.toggle = event.ctrlKey || event.metaKey;
+
+      event.preventDefault();
+    };
+
+    const onMouseMove = (event: MouseEvent) => {
+      if (!boxSelect.active) {
+        return;
+      }
+      const scrollEl = scrollRef.value;
+      if (!scrollEl) {
+        return;
+      }
+      const scrollRect = scrollEl.getBoundingClientRect();
+      boxSelect.currentX = event.clientX - scrollRect.left + scrollEl.scrollLeft;
+      boxSelect.currentY = event.clientY - scrollRect.top + scrollEl.scrollTop;
+
+      // 自动滚动
+      startAutoScroll(scrollEl, event.clientY);
+    };
+
+    const onMouseUp = () => {
+      stopAutoScroll();
+      if (!boxSelect.active) {
+        return;
+      }
+      const scrollEl = scrollRef.value;
+      if (!scrollEl) {
+        boxSelect.active = false;
+        return;
+      }
+
+      const selLeft = Math.min(boxSelect.startX, boxSelect.currentX);
+      const selTop = Math.min(boxSelect.startY, boxSelect.currentY);
+      const selRight = Math.max(boxSelect.startX, boxSelect.currentX);
+      const selBottom = Math.max(boxSelect.startY, boxSelect.currentY);
+
+      // 框选距离太短（< 5px）视为未框选
+      const selWidth = selRight - selLeft;
+      const selHeight = selBottom - selTop;
+      if (selWidth < 5 && selHeight < 5) {
+        boxSelect.active = false;
+        return;
+      }
+
+      const toggle = boxSelect.toggle;
+      const rowsToUpdate: { item: IListItem; val: boolean }[] = [];
+      const containerRect = scrollEl.getBoundingClientRect();
+
+      // 获取表体区域用于行相交判断
+      // 可视行：通过 DOM 判断
+      const visibleRows = scrollEl.querySelectorAll<HTMLElement>(
+        "tr.rename-preview-content-table-item"
+      );
+      visibleRows.forEach((row) => {
+        const rowRect = row.getBoundingClientRect();
+        if (rectsIntersect(selLeft, selTop, selRight, selBottom, 0, rowRect.top - containerRect.top, containerRect.width, rowRect.bottom - containerRect.top)) {
+          const itemId = row.getAttribute("data-item-id");
+          if (itemId) {
+            const item = currentList.value.find((i) => i.id === itemId);
+            if (item && item.status === "none") {
+              rowsToUpdate.push({
+                item,
+                val: toggle ? !item.isChecked : true,
+              });
+            }
+          }
+        }
+      });
+
+      // 虚拟滚动模式下，还需通过数学计算判断非可视行
+      if (isVirtualized.value) {
+        const allItems = currentList.value;
+        for (let i = 0; i < allItems.length; i++) {
+          // 跳过已被可视行处理过的索引
+          const range = getRowYRange(i);
+          if (!range) {
+            continue;
+          }
+          // 检查是否与选框相交
+          if (rectsIntersect(selLeft, selTop, selRight, selBottom, 0, range.top, containerRect.width, range.bottom)) {
+            const item = allItems[i];
+            // 去重：若该 item 已在 rowsToUpdate 中则跳过
+            if (item.status !== "none" || rowsToUpdate.some((r) => r.item.id === item.id)) {
+              continue;
+            }
+            rowsToUpdate.push({
+              item,
+              val: toggle ? !item.isChecked : true,
+            });
+          }
+        }
+      }
+
+      if (rowsToUpdate.length) {
+        providerRef?.value.batchUpdateItemIsChecked(rowsToUpdate);
+      }
+
+      boxSelect.active = false;
+    };
+
+    // 全局 mousemove / mouseup 绑定在 window 上，支持拖到列表外部
+    const onWindowMouseMove = (event: MouseEvent) => onMouseMove(event);
+    const onWindowMouseUp = () => onMouseUp();
 
     const isVirtualized = computed(() => currentList.value.length > VIRTUAL_LIST_THRESHOLD);
 
@@ -271,6 +481,23 @@ export default defineComponent({
       providerRef?.value.updateItemIsChecked(item, val);
     };
 
+    // Shift+区间选择：在 checkbox td 上捕获 click 事件获取 shiftKey
+    const onItemCheckboxClick = (item: IListItem, event: MouseEvent) => {
+      if (!event.shiftKey) {
+        return;
+      }
+      // 阻止 ComponentCheckbox 的默认 toggle 行为
+      event.preventDefault();
+      event.stopPropagation();
+      if (item.status !== "none") {
+        return;
+      }
+      const idx = currentList.value.findIndex((i) => i.id === item.id);
+      if (idx >= 0) {
+        providerRef?.value.selectRange(idx);
+      }
+    };
+
     const oldFileNameDiffRender = (diffList: Change[]) => {
       // same: !item.added && !item.removed,
       return () =>
@@ -302,6 +529,8 @@ export default defineComponent({
     };
 
     onMounted(() => {
+      window.addEventListener("mousemove", onWindowMouseMove);
+      window.addEventListener("mouseup", onWindowMouseUp);
       providerRef?.value.onCurrentListUpdate(onCurrentListUpdate);
       nextTick(() => {
         syncViewport();
@@ -310,6 +539,9 @@ export default defineComponent({
     });
 
     onUnmounted(() => {
+      window.removeEventListener("mousemove", onWindowMouseMove);
+      window.removeEventListener("mouseup", onWindowMouseUp);
+      stopAutoScroll();
       providerRef?.value.offCurrentListUpdate(onCurrentListUpdate);
       if (rafId) {
         cancelAnimationFrame(rafId);
@@ -326,10 +558,14 @@ export default defineComponent({
       bottomPad,
       scrollRef,
       bodyRef,
+      boxSelect,
+      boxSelectRectStyle,
       onScroll,
+      onMouseDown,
       onResetSort,
       onCheckedAllUpdate,
       onItemIsCheckedUpdate,
+      onItemCheckboxClick,
       oldFileNameDiffRender,
       newFileNameDiffRender,
       getStatusIcon,
@@ -384,6 +620,15 @@ export default defineComponent({
   margin: 0 calc(0px - var(--cdp-gutter) / 2);
   overflow: auto;
   max-height: 50vh;
+  position: relative;
+}
+.rename-preview-box-select {
+  position: absolute;
+  border: 1px dashed var(--cdp-color-blue);
+  background-color: var(--cdp-color-blue-100);
+  opacity: 0.4;
+  pointer-events: none;
+  z-index: 10;
 }
 .rename-preview-content-table {
   width: 100%;

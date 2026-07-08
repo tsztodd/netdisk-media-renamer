@@ -1,6 +1,6 @@
 # 网盘影视刮削重命名（netdisk-media-renamer）
 
-> 在 [afeireal/cloud-disk-plugin](https://github.com/Lens-lzy/netdisk-media-renamer) 的基础上**改版**而来。
+> 在 [Lens-lzy/netdisk-media-renamer](https://github.com/Lens-lzy/netdisk-media-renamer) 的基础上**改版**而来。
 > 在保留其「网盘内批量重命名（剧集模式、正则模式、拖拽排序、自动集数）」核心能力的基础上，
 > 面向**影视文件刮削**场景做了大量优化与新增，感谢原作者 afeireal 的开源工作（MIT）。
 

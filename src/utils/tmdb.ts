@@ -39,9 +39,9 @@ export const setApiKey = (value: string): void => {
 
 export const getLanguage = (): string => {
   try {
-    return localStorage.getItem(LANG_KEY) || "en-US";
+    return localStorage.getItem(LANG_KEY) || "zh-CN";
   } catch {
-    return "en-US";
+    return "zh-CN";
   }
 };
 

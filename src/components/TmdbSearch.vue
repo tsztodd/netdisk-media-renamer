@@ -21,7 +21,7 @@
         title="设置 TMDB API Key"
         @click="showKey = !showKey"
       >
-        🔑
+        <component-icon name="key"></component-icon>
       </button>
     </div>
 
@@ -59,7 +59,7 @@
           {{ item.original_name }}
         </span>
         <span class="tmdb-result-year">{{ (item.first_air_date || "").slice(0, 4) || "—" }}</span>
-        <span class="tmdb-result-apply">应用 →</span>
+        <span class="tmdb-result-apply">应用 <component-icon name="rightArrow"></component-icon></span>
       </li>
     </ul>
   </div>
@@ -80,9 +80,13 @@ import {
   formatSeriesTitle,
   TmdbError,
 } from "@/utils/tmdb";
+import ComponentIcon from "@/components/Component/ComponentIcon.vue";
 
 export default defineComponent({
   name: "TmdbSearch",
+  components: {
+    ComponentIcon,
+  },
   props: {
     disabled: {
       type: Boolean,
@@ -234,6 +238,11 @@ export default defineComponent({
   border-radius: 6px;
   background-color: var(--cdp-color-white);
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
 }
 .tmdb-key-toggle.active {
   border-color: var(--cdp-color-blue);

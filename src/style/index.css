@@ -71,11 +71,14 @@
   --cdp-color-yellow-950: #422006;
 
   --cdp-font-size: var(--cdp-font-size-base);
-  --cdp-font-size-xs: 10px;
-  --cdp-font-size-sm: 12px;
+  --cdp-font-size-xs: 12px;
+  --cdp-font-size-sm: 13px;
   --cdp-font-size-base: 14px;
-  --cdp-font-size-lg: 16px;
+  --cdp-font-size-lg: 15px;
   --cdp-font-size-xl: 18px;
+  --cdp-font-size-hint: 12px;
+
+  --cdp-color-hint: var(--cdp-color-gray-400);
 
   --cdp-line-height: var(--cdp-line-height-base);
   --cdp-line-height-xs: 12px;

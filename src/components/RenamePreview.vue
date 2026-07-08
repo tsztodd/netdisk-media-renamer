@@ -577,17 +577,20 @@ export default defineComponent({
 <style scoped>
 .rename-preview {
   height: 100%;
-  display: grid;
-  grid-template-rows: auto minmax(200px, 1fr);
+  display: flex;
+  flex-direction: column;
+  padding: 8px 12px;
+  box-sizing: border-box;
 }
 
 .rename-preview-status {
-  margin: 0 calc(0px - var(--cdp-gutter) / 2);
   display: flex;
   flex-wrap: wrap;
+  flex-shrink: 0;
   font-size: var(--cdp-font-size-sm);
   align-items: center;
   line-height: var(--cdp-line-height-sm);
+  padding-bottom: 4px;
 }
 .rename-preview-status-item {
   margin: calc(var(--cdp-gutter) / 2);
@@ -615,11 +618,9 @@ export default defineComponent({
 }
 
 .rename-preview-content {
-  width: 100%;
-  height: 100%;
-  margin: 0 calc(0px - var(--cdp-gutter) / 2);
+  flex: 1;
   overflow: auto;
-  max-height: 50vh;
+  min-height: 0;
   position: relative;
 }
 .rename-preview-box-select {
@@ -632,36 +633,64 @@ export default defineComponent({
 }
 .rename-preview-content-table {
   width: 100%;
-  /* height: 100%; */
   position: relative;
   font-size: var(--cdp-font-size-sm);
   line-height: var(--cdp-font-size-sm);
+  border-collapse: separate;
+  border-spacing: 0;
 }
 .rename-preview-content-table-header {
   top: 0;
-  z-index: 1;
+  z-index: 2;
   position: sticky;
-  margin-bottom: var(--cdp-gutter);
-  background-color: var(--cdp-color-white);
+  background-color: var(--cdp-color-gray-50);
+  border-radius: 8px 8px 0 0;
 }
 .rename-preview-content-table-header th {
-  padding: var(--cdp-gutter) calc(var(--cdp-gutter) / 2);
-  text-align: left;
+  padding: 10px calc(var(--cdp-gutter) / 2);
+  text-align: center;
+  font-weight: 600;
+  color: var(--cdp-color-gray-700);
+  border-bottom: 2px solid var(--cdp-color-gray-200);
   box-sizing: border-box;
 }
 .rename-preview-content-table-body td {
-  padding: calc(var(--cdp-gutter) / 4) calc(var(--cdp-gutter) / 2);
+  padding: 6px calc(var(--cdp-gutter) / 2);
+  height: 36px;
   box-sizing: border-box;
+  border-bottom: 1px solid var(--cdp-color-gray-100);
+  vertical-align: middle;
 }
 .rename-preview-content-table-item {
   color: var(--cdp-color-gray-300);
-  transition: color var(--cdp-transition-default);
+  transition:
+    color var(--cdp-transition-default),
+    background-color var(--cdp-transition-default);
   background-color: var(--cdp-color-white);
+}
+/* 行 hover 效果 */
+.rename-preview-content-table-body .rename-preview-content-table-item:hover {
+  background-color: var(--cdp-color-gray-50);
+}
+/* 奇偶行微区分 */
+.rename-preview-content-table-body .rename-preview-content-table-item:nth-child(even) {
+  background-color: var(--cdp-color-gray-50);
+}
+.rename-preview-content-table-body .rename-preview-content-table-item:nth-child(even):hover {
+  background-color: var(--cdp-color-gray-100);
+}
+/* 已选中行的高亮底色 */
+.rename-preview-content-table-body .rename-preview-content-table-item.is-checked {
+  background-color: var(--cdp-color-blue-50);
+}
+.rename-preview-content-table-body .rename-preview-content-table-item.is-checked:hover {
+  background-color: var(--cdp-color-blue-100);
 }
 /* 虚拟滚动占位行：仅用于撑起滚动高度，不参与交互与样式 */
 .rename-preview-content-table-spacer td {
   padding: 0;
   border: none;
+  background-color: transparent;
 }
 .rename-preview-content-table-item.is-checked {
   color: var(--cdp-color-gray-600);
@@ -682,15 +711,21 @@ export default defineComponent({
   width: calc(var(--cdp-gutter) + 1em);
 }
 .rename-preview-content-table-item-index {
-  width: 5rem;
-  -webkit-user-select: none; /* Safari */
-  -moz-user-select: none; /* Firefox */
-  -ms-user-select: none; /* IE 10+ */
-  user-select: none; /* 标准语法 */
+  width: 10rem;
+  text-align: center;
+  position: relative;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
   white-space: nowrap;
 }
 .rename-preview-content-table-item-index-reset-sort {
   cursor: pointer;
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
 }
 .rename-preview-content-table-item-index-reset-sort:hover
   .rename-preview-content-table-item-index-reset-sort-static {
@@ -705,6 +740,12 @@ export default defineComponent({
 }
 .rename-preview-content-table-item.allow-drop .rename-preview-content-table-item-index-handler {
   cursor: grab;
+      cursor: pointer;
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+
 }
 .rename-preview-content-table-item.block-drop .rename-preview-content-table-item-index-handler {
   /* cursor: no-drop; */
@@ -719,6 +760,7 @@ export default defineComponent({
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+  text-align: center;
 }
 .rename-preview-content-table-item.is-checked
   .rename-preview-content-table-item-old-file-name:deep(.removed) {

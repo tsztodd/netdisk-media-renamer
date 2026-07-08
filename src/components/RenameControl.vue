@@ -105,20 +105,22 @@
           排序已选
         </component-checkbox>
       </div>
-      <button
-        class="rename-control-footer-button reset"
-        :disabled="isDisabled"
-        @click="onResetClick"
-      >
-        重置
-      </button>
-      <button
-        class="rename-control-footer-button confirm"
-        :disabled="!canApply"
-        @click="onConfirmClick"
-      >
-        应用
-      </button>
+      <div class="rename-control-footer-actions">
+        <button
+          class="rename-control-footer-button reset"
+          :disabled="isDisabled"
+          @click="onResetClick"
+        >
+          重置
+        </button>
+        <button
+          class="rename-control-footer-button confirm"
+          :disabled="!canApply"
+          @click="onConfirmClick"
+        >
+          应用
+        </button>
+      </div>
     </div>
 
     <component-loading v-if="providerRef.isControlLoading"></component-loading>
@@ -222,22 +224,24 @@ export default defineComponent({
 
 <style scoped>
 .rename-control {
-  padding: var(--cdp-gutter);
-  background: linear-gradient(180deg, var(--cdp-color-gray-50) 0%, var(--cdp-color-gray-100) 100%);
-  box-shadow: var(--cdp-box-shadow-md);
-  transition: box-shadow var(--cdp-transition-default);
-  border-radius: var(--cdp-gutter);
-}
-.rename-control:hover {
-  box-shadow: var(--cdp-box-shadow-xl);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 16px;
+  background: var(--cdp-color-blue-50);
+  border-radius: 0;
+  box-sizing: border-box;
 }
 .rename-control-header {
   display: flex;
-  align-items: top;
+  align-items: center;
   justify-content: space-between;
+  margin-bottom: 12px;
 }
 .rename-control-header-content {
-  font-size: var(--cdp-font-size-lg);
+  font-size: var(--cdp-font-size-base);
+  font-weight: 600;
+  color: var(--cdp-color-gray-900);
 }
 .rename-control-header-local-version {
   display: flex;
@@ -245,7 +249,8 @@ export default defineComponent({
 .rename-control-header-local-version,
 .rename-control-header-remote-version {
   cursor: pointer;
-  font-size: var(--cdp-font-size-xs);
+  font-size: var(--cdp-font-size-hint);
+  color: var(--cdp-color-hint);
 }
 .rename-control-header-local-version:hover,
 .rename-control-header-remote-version:hover {
@@ -264,16 +269,23 @@ export default defineComponent({
   grid-column: 1 / -1;
 }
 .rename-control-footer {
-  display: grid;
-  grid-gap: var(--cdp-gutter);
-  margin-top: var(--cdp-gutter);
-  grid-template-columns: 1fr auto auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid var(--cdp-color-gray-100);
 }
 .rename-control-footer-option {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: 6px;
+  margin-left: -2px;
+}
+.rename-control-footer-actions {
+  display: flex;
+  gap: 8px;
 }
 .rename-control-episode-source {
   height: 24px;
@@ -287,29 +299,35 @@ export default defineComponent({
 .rename-control-footer-button {
   border: none;
   cursor: pointer;
-  padding: 0;
-  font-size: var(--cdp-font-size);
+  padding: 6px 16px;
+  font-size: var(--cdp-font-size-sm);
+  font-weight: 500;
   transition: var(--cdp-transition-all);
-  line-height: 1;
-  background-color: transparent;
+  line-height: 1.4;
+  border-radius: 6px;
 }
 .rename-control-footer-button.reset {
-  color: var(--cdp-color-gray-900);
+  color: var(--cdp-color-gray-600);
+  background: var(--cdp-color-gray-100);
 }
 .rename-control-footer-button.reset:hover {
-  color: var(--cdp-color-gray-700);
+  color: var(--cdp-color-gray-900);
+  background: var(--cdp-color-gray-200);
 }
 .rename-control-footer-button.confirm {
-  color: var(--cdp-color-blue);
+  color: var(--cdp-color-white);
+  background: var(--cdp-color-blue);
 }
 .rename-control-footer-button.confirm:hover {
-  color: var(--cdp-color-blue-700);
+  background: var(--cdp-color-blue-600);
 }
 .rename-control-footer-button[disabled] {
   color: var(--cdp-color-gray-300);
+  background: var(--cdp-color-gray-100);
   cursor: not-allowed;
 }
 .rename-control-footer-button[disabled]:hover {
-  color: var(--cdp-color-gray-400);
+  color: var(--cdp-color-gray-300);
+  background: var(--cdp-color-gray-100);
 }
 </style>

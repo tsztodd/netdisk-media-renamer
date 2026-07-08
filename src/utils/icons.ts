@@ -526,6 +526,97 @@ const dCaret: TIcon = {
   },
 };
 
+// 钥匙图标，用于 TMDB API Key 设置按钮
+const key: TIcon = {
+  type: "svg",
+  props: {
+    fill: "currentColor",
+    xmlns: "http://www.w3.org/2000/svg",
+    width: "1em",
+    height: "1em",
+    version: "1.1",
+    viewBox: "0 0 1024 1024",
+  },
+  children: {
+    type: "path",
+    props: {
+      d: "M608 112c-167.872 0-304 136.128-304 304 0 24.192 3.456 47.488 8.96 69.824l-258.304 258.304a32 32 0 000 45.248l90.56 90.56a32 32 0 0045.248 0l34.208-34.208 34.208 34.208a32 32 0 0045.248 0l34.208-34.208 34.208 34.208a32 32 0 0045.248 0l34.208-34.208 34.208 34.208a32 32 0 0045.248 0l56.512-56.512a32 32 0 000-45.248l-67.808-67.808 78.512-78.528C538.24 723.904 571.712 720 608 720c167.872 0 304-136.128 304-304S775.872 112 608 112z m0 64c132.544 0 240 107.456 240 240s-107.456 240-240 240-240-107.456-240-240 107.456-240 240-240z m-80 192a48 48 0 100 96 48 48 0 000-96z",
+    },
+  },
+};
+
+const upArrow: TIcon = {
+  type: "svg",
+  props: {
+    fill: "currentColor",
+    xmlns: "http://www.w3.org/2000/svg",
+    width: "1em",
+    height: "1em",
+    version: "1.1",
+    viewBox: "0 0 1024 1024",
+  },
+  children: {
+    type: "path",
+    props: {
+      d: "M480 754.752V160a32 32 0 0164 0v594.752l233.376-233.376a32 32 0 1145.248 45.248l-288 288a32 32 0 01-45.248 0l-288-288a32 32 0 1145.248-45.248L480 754.752z",
+    },
+  },
+};
+
+const downArrow: TIcon = {
+  type: "svg",
+  props: {
+    fill: "currentColor",
+    xmlns: "http://www.w3.org/2000/svg",
+    width: "1em",
+    height: "1em",
+    version: "1.1",
+    viewBox: "0 0 1024 1024",
+  },
+  children: {
+    type: "path",
+    props: {
+      d: "M521.376 246.624a32 32 0 0145.248 0l288 288a32 32 0 11-45.248 45.248L576 346.496V941.248a32 32 0 11-64 0V346.496l-233.376 233.376a32 32 0 01-45.248-45.248l288-288z",
+    },
+  },
+};
+
+const times: TIcon = {
+  type: "svg",
+  props: {
+    fill: "currentColor",
+    xmlns: "http://www.w3.org/2000/svg",
+    width: "1em",
+    height: "1em",
+    version: "1.1",
+    viewBox: "0 0 1024 1024",
+  },
+  children: {
+    type: "path",
+    props: {
+      d: "M563.8 512l262.5-312.9c4.4-5.2 0.7-13.1-6.1-13.1h-79.8c-4.7 0-9.2 2.1-12.3 5.7L511.6 449.8 295.1 191.7c-3-3.6-7.5-5.7-12.3-5.7H203c-6.8 0-10.5 7.9-6.1 13.1L459.4 512 196.9 824.9c-4.4 5.2-0.7 13.1 6.1 13.1h79.8c4.7 0 9.2-2.1 12.3-5.7l216.5-258.1 216.5 258.1c3 3.6 7.5 5.7 12.3 5.7h79.8c6.8 0 10.5-7.9 6.1-13.1L563.8 512z",
+    },
+  },
+};
+
+const rightArrow: TIcon = {
+  type: "svg",
+  props: {
+    fill: "currentColor",
+    xmlns: "http://www.w3.org/2000/svg",
+    width: "1em",
+    height: "1em",
+    version: "1.1",
+    viewBox: "0 0 1024 1024",
+  },
+  children: {
+    type: "path",
+    props: {
+      d: "M754.752 480H160a32 32 0 000 64h594.752L521.376 777.376a32 32 0 1045.248 45.248l288-288a32 32 0 000-45.248l-288-288a32 32 0 10-45.248 45.248L754.752 480z",
+    },
+  },
+};
+
 const loading: TIcon = {
   type: "svg",
   props: {
@@ -656,6 +747,11 @@ const icons: { [key: string]: TIcon } = {
   rank,
   sort,
   dCaret,
+  rightArrow,
+  upArrow,
+  downArrow,
+  times,
+  key,
 
   loading,
 };

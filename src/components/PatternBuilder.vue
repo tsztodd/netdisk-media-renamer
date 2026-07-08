@@ -39,7 +39,7 @@
             :disabled="disabled || index === 0"
             @click="onMove(index, -1)"
           >
-            ↑
+            <component-icon name="upArrow"></component-icon>
           </button>
           <button
             class="pattern-builder-item-op"
@@ -47,7 +47,7 @@
             :disabled="disabled || index === blocks.length - 1"
             @click="onMove(index, 1)"
           >
-            ↓
+            <component-icon name="downArrow"></component-icon>
           </button>
           <button
             class="pattern-builder-item-op delete"
@@ -55,7 +55,7 @@
             :disabled="disabled"
             @click="onRemove(index)"
           >
-            ✕
+            <component-icon name="times"></component-icon>
           </button>
         </div>
 
@@ -78,7 +78,7 @@
               placeholder="查找"
               @input="onPatch(index, { from: ($event.target as HTMLInputElement).value })"
             />
-            <span class="pb-arrow">→</span>
+            <span class="pb-arrow"><component-icon name="rightArrow"></component-icon></span>
             <input
               class="pb-input"
               :value="block.to"
@@ -157,7 +157,9 @@
               @input="onOffsetInput(index, ($event.target as HTMLInputElement).value)"
               @change="onOffsetCommit(index, ($event.target as HTMLInputElement).value)"
             />
-            <span class="pb-label">（第1集 → 第01集）</span>
+            <span class="pb-label">（第1集</span>
+            <component-icon name="rightArrow"></component-icon>
+            <span class="pb-label">第01集）</span>
           </template>
 
           <template v-else-if="block.type === 'prefix' || block.type === 'suffix'">
@@ -178,7 +180,7 @@
               placeholder="正则表达式，如 \\d+"
               @input="onPatch(index, { pattern: ($event.target as HTMLInputElement).value })"
             />
-            <span class="pb-arrow">→</span>
+            <span class="pb-arrow"><component-icon name="rightArrow"></component-icon></span>
             <input
               class="pb-input"
               :value="block.replace"
@@ -214,9 +216,13 @@ import {
   MOVE_TO_LABELS,
   REMOVE_TAG_LABELS,
 } from "@/utils/patternBuilder";
+import ComponentIcon from "@/components/Component/ComponentIcon.vue";
 
 export default defineComponent({
   name: "PatternBuilder",
+  components: {
+    ComponentIcon,
+  },
   props: {
     disabled: {
       type: Boolean,
@@ -408,6 +414,11 @@ export default defineComponent({
   cursor: pointer;
   color: var(--cdp-color-gray-700);
   font-size: var(--cdp-font-size-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
 }
 .pattern-builder-item-op:disabled {
   cursor: not-allowed;

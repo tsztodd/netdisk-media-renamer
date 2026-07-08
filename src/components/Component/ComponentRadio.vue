@@ -88,10 +88,6 @@ export default defineComponent({
 .component-radio.is-disabled .component-radio-label {
   color: var(--cdp-color-gray-300);
 }
-.component-checkbox + .component-radio,
-.component-radio.radio + .component-radio.radio {
-  margin-left: 0.5em;
-}
 .component-radio.radio .component-radio-input {
   width: 1em;
   height: 1em;

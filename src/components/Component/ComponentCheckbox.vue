@@ -78,10 +78,6 @@ export default defineComponent({
 .component-checkbox.is-disabled .component-checkbox-label {
   color: var(--cdp-color-gray-300);
 }
-.component-radio + .component-checkbox,
-.component-checkbox + .component-checkbox {
-  margin-left: 0.5em;
-}
 .component-checkbox-input {
   width: 1em;
   height: 1em;

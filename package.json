@@ -2,12 +2,12 @@
   "name": "netdisk-media-renamer",
   "type": "module",
   "cnName": "网盘影视刮削重命名",
-  "author": "Alek.LIU",
+  "author": "Todd",
   "contributors": [
-    "afeireal（原作者，基于其 cloud-disk-plugin 重构 https://github.com/afeireal/cloud-disk-plugin）"
+    "在 [Lens-lzy/netdisk-media-renamer](https://github.com/Lens-lzy/netdisk-media-renamer) 的基础上**改版**而来"
   ],
   "license": "MIT",
-  "version": "2.1.0",
+  "version": "1.0.0",
   "keywords": [
     "网盘",
     "影视",

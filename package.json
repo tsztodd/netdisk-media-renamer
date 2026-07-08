@@ -22,7 +22,7 @@
     "media rename",
     "tamper monkey"
   ],
-  "repository": "https://github.com/Lens-lzy/netdisk-media-renamer",
+  "repository": "https://github.com/tsztodd/netdisk-media-renamer",
   "description": "Batch rename media files on cloud disks for scraper-friendly naming.",
   "cnDescription": "网盘影视文件批量重命名，生成刮削友好的命名（支持 TMDB 搜索、正则积木），适配百度网盘、阿里云盘、夸克网盘、PikPak。",
   "scripts": {

@@ -1,6 +1,6 @@
 # 网盘影视刮削重命名（netdisk-media-renamer）
 
-> 在 [afeireal/cloud-disk-plugin](https://github.com/afeireal/cloud-disk-plugin) 的基础上**重构改版**而来。
+> 在 [afeireal/cloud-disk-plugin](https://github.com/Lens-lzy/netdisk-media-renamer) 的基础上**改版**而来。
 > 在保留其「网盘内批量重命名（剧集模式、正则模式、拖拽排序、自动集数）」核心能力的基础上，
 > 面向**影视文件刮削**场景做了大量优化与新增，感谢原作者 afeireal 的开源工作（MIT）。
 
@@ -10,16 +10,13 @@
 ## 相比原版的改动
 
 ### 🐛 修复
-- **预览/改名时整机卡死**：逐字符 Myers 差分（最坏 O(N²)、每字符一个 DOM 节点）改为 O(N) 前后缀差分，并对输入做防抖；不再在 50/150 个文件时阻塞主线程。
-- **正则大面积漏匹配**：修复带 `g` 标志的正则在循环中 `.test()` 推进 `lastIndex` 的有状态 bug。
-- **100 集以上预览空白/崩溃**：修复 `complementZero` 在数字位数超出时 `"0".repeat(负数)` 抛异常。
-- **默认全选**：改为读取网盘当前已勾选的文件，仅预选这些（带安全回退）。
+- **图标错位**：全面改用svg的ICON图标，不适用emoji和字符
 
 ### ✨ 优化 / 新增
-- **居中弹窗**：从底部贴边改为屏幕居中的缩放弹窗。
-- **集数来源可选**：默认从**原文件名**提取集数（`12.mkv → E12`，不再被列表顺序带偏），可切换为按顺序。
-- **正则积木（可视化）**：不懂正则也能用——删除文字 / 查找替换 / 删括号内容 / 数字补零 / 加前后缀 等积木自由拼装，同时保留高级原始正则。
-- **TMDB 搜索**：剧集模式内联网搜索剧名，一键生成 `剧名.年份`，配合季数+自动集数得到 `Show.Name.Year.S01E01`。需自行在 [themoviedb.org](https://www.themoviedb.org/settings/api) 申请免费 API Key 并填入（保存在本地，不外泄）。
+- **数字便宜**：数字补零里支持数字偏移量设置，统一加或减
+- **框选文件**：支持鼠标框选多个文件，一次勾选多个文件。
+- **Shift多选**：支持按 Shift 键点选开始和结束文件
+- **布局优化**：调整为左右布局，样式美化，更易操作。
 
 ## 适用范围
 
@@ -31,7 +28,7 @@
 ## 安装
 
 1. 安装 [Tampermonkey / 篡改猴](https://www.tampermonkey.net/)。
-2. 安装脚本：打开 [netdisk-media-renamer.user.js](https://raw.githubusercontent.com/Lens-lzy/netdisk-media-renamer/main/netdisk-media-renamer.user.js) → Tampermonkey 会弹出安装页 → 安装。
+2. 安装脚本：打开 [netdisk-media-renamer.user.js](https://raw.githubusercontent.com/tsztodd/netdisk-media-renamer/main/netdisk-media-renamer.user.js) → Tampermonkey 会弹出安装页 → 安装。
 3. 之后作者在仓库更新版本，Tampermonkey 会自动检测并更新（@updateURL 指向本仓库 main 分支）。
 
 ## 使用方法

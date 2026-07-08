@@ -37,4 +37,4 @@ git commit -m "release v${VERSION}"
 git push origin main
 
 echo "✅ 已发布 v${VERSION}。安装/更新链接："
-echo "   https://raw.githubusercontent.com/Lens-lzy/netdisk-media-renamer/main/netdisk-media-renamer.user.js"
+echo "   https://raw.githubusercontent.com/tsztodd/netdisk-media-renamer/main/netdisk-media-renamer.user.js"
